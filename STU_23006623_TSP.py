@@ -126,56 +126,58 @@ def fitness_function(gene_pool: list, best_solution: list) -> tuple:
 
 
 def mating_function(gene_pool: list, best_solution: list, mutation_rate: float, elite_threshold: float) -> list:
-    progeny = []
-    sorted_gene_pool, _  = fitness_function(gene_pool, best_solution)
-    n = len(sorted_gene_pool)
+    n = len(gene_pool)
+    
+    if n == 0:
+        return gene_pool
     # -1 because the random.randint method is inclusive
     elite_range = n - 1 if elite_threshold == 0 else int((n - 1) * elite_threshold)
     
-    while len(progeny) < n:
-        elite_parent_idx = random.randint(0, elite_range)
-        normal_parent_idx = random.randint(0, n - 1)
+    elites = gene_pool[:elite_range + 1]
+    
+    progeny = [best_solution]
+    
+    while len(progeny) < n * 3:
+        parent1 = random.choice(elites)
+        parent2 = random.choice(gene_pool)
         
-        if n > 1:
-            while elite_parent_idx == normal_parent_idx:
-                normal_parent_idx = random.randint(0, n - 1)
-            
-        elite_parent = sorted_gene_pool[elite_parent_idx]
-        normal_parent = sorted_gene_pool[normal_parent_idx]
+        bred_offspring = breed(parent1, parent2)
+        mutated_offspring = mutate(bred_offspring, mutation_rate)
         
-        offspring = breed(normal_parent, elite_parent)
-        offspring_gene = mutate(offspring, mutation_rate)
+        progeny.append(mutated_offspring)
+        progeny.append(bred_offspring)
 
-        progeny.append(offspring_gene)
-
-    return progeny
+    sorted_progeny = sorted(progeny, key=lambda x: calculate_path(x))
+    
+    return sorted_progeny[:n]
 
 
 def breed(parent1: list, parent2: list) -> list:
-    n = len(parent1)
-    offspring = []
-    selected_genes = set()
+    offspring_p1 = []
+    offspring_p2 = []
+    
+    gene_a = int(random.random() * len(parent1))
+    gene_b = int(random.random() * len(parent1))
+    
+    start_pt = min(gene_a, gene_b)
+    end_pt = max(gene_a, gene_b)
 
-    while len(selected_genes) < n:
-        rand_pos = random.randint(0, n - 1)
-        selected_gene = parent1[rand_pos] if random.random(
-        ) < 0.5 else parent2[rand_pos]
+    for i in range(start_pt, end_pt):
+        offspring_p1.append(parent1[i])
+        
+    offspring_p2 = [item for item in parent2 if item not in offspring_p1]
 
-        selected_gene_str = f'{selected_gene[0]}{selected_gene[1]}'
-        if selected_gene_str not in selected_genes:
-            selected_genes.add(selected_gene_str)
-            offspring.append(selected_gene)
-
+    offspring = offspring_p1 + offspring_p2
     return offspring
 
 
-def mutate(child: list, mutation_rate: float) -> list:
-    n = len(child)
-
-    for i in range(n):
+def mutate(child: list, mutation_rate: float) -> list:    
+    for _ in range(len(child)):
         if random.random() < mutation_rate:
-            rand_pos = random.randint(0, n - 1)
-            child[i], child[rand_pos] = child[rand_pos], child[i]
+            idx1 = int(random.random() * len(child))
+            idx2 = int(random.random() * len(child))
+
+            child[idx1], child[idx2] = child[idx2], child[idx1]
 
     return child
 
