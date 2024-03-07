@@ -144,8 +144,10 @@ def mating_function(gene_pool: list, best_solution: list, mutation_rate: float, 
         bred_offspring = breed(parent1, parent2)
         mutated_offspring = mutate(bred_offspring, mutation_rate)
         
-        progeny.append(mutated_offspring)
-        progeny.append(bred_offspring)
+        if calculate_path(mutated_offspring) < calculate_path(bred_offspring):
+            progeny.append(mutated_offspring)
+        else:
+            progeny.append(bred_offspring)
 
     sorted_progeny = sorted(progeny, key=lambda x: calculate_path(x))
     
